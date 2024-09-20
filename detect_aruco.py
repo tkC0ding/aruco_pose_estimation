@@ -1,8 +1,16 @@
 import cv2
+import numpy as np
 
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+
+calibration_data = np.load('calibration_files/calibration.npz')
+
+camera_matrix = calibration_data['camera_marix']
+dist_coeff = calibration_data['dist_coeff']
+rvecs = calibration_data['rvecs']
+tvecs = calibration_data['tvecs']
 
 dictonary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
 detector_parmas = cv2.aruco.DetectorParameters()
