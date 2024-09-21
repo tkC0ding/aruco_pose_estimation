@@ -39,15 +39,16 @@ while True:
         if success:
             cv2.aruco.drawDetectedMarkers(frame, corners, ids, (0,255,0))
 
-            rotation_matrix, _ = cv2.Rodrigues(rvecs)
-            r = R.from_matrix(rotation_matrix)
-            quat = r.as_quat()
+            r = R.from_rotvec(rvecs.flatten())
+            euler_angles = r.as_euler('xyz', degrees=True)
 
-            rotation_transform_x = quat[0]
-            rotation_transform_y = quat[1]
-            rotation_transform_z = quat[2]
-            rotation_transform_w = quat[3]
+            text = f'roll : {euler_angles[0]} pitch : {euler_angles[1]} yaw : {euler_angles[2]}'
 
+            cv2.drawFrameAxes(frame, new_camera_matrix, dist_coeff, rvecs, tvecs, 1, 1)
+            cv2.putText(frame, text, (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1.5, (0,255,0), 2)
+    cv2.imshow('frame', frame)
+    if cv2.waitKey(0) & 0xFF == ord('q'):
+        break
 
 cap.release()
 cv2.destroyAllWindows()
