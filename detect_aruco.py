@@ -44,7 +44,7 @@ while True:
 
             text = f'roll : {euler_angles[0]} pitch : {euler_angles[1]} yaw : {euler_angles[2]}'
 
-            cv2.drawFrameAxes(frame, new_camera_matrix, dist_coeff, rvecs, tvecs, 1, 1)
+            cv2.drawFrameAxes(frame, new_camera_matrix, dist_coeff, rvecs, tvecs, 0.1, 3)
             print(text)
     cv2.imshow('frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
