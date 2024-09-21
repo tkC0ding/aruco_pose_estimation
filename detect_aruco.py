@@ -45,9 +45,9 @@ while True:
             text = f'roll : {euler_angles[0]} pitch : {euler_angles[1]} yaw : {euler_angles[2]}'
 
             cv2.drawFrameAxes(frame, new_camera_matrix, dist_coeff, rvecs, tvecs, 1, 1)
-            cv2.putText(frame, text, (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1.5, (0,255,0), 2)
+            print(text)
     cv2.imshow('frame', frame)
-    if cv2.waitKey(0) & 0xFF == ord('q'):
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cap.release()
