@@ -1,6 +1,8 @@
 import cv2  # using cv only for starting video feed : ) nothing else
 import numpy as np # does everything else other than starting the video : )
 from numba import jit
+from scipy.ndimage import convolve
+
 
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -54,14 +56,41 @@ def find_uv(x_distorted, y_distorted, camera_matrix, dist_coeff):
     
     return (u,v)
 
+def sobel(image):
+    Gx = np.array([
+        [-1, 0, 1],
+        [-2, 0, 2],
+        [-1, 0, 1]
+    ]).astype(np.uint8)
+
+    Gy = np.array([
+        [-1, -2, -1],
+        [0, 0, 0],
+        [1, 2, 1]
+    ]).astype(np.uint8)
+
+    Ix = convolve(image, Gx).astype(np.uint8)
+    Iy = convolve(image, Gy).astype(np.uint8)
+
+    G = np.sqrt((Ix**2) + (Iy**2)).astype(np.uint8)
+    theta = np.arctan2(Iy, Ix)
+
+    return (G, theta)
+
 while True:
     _, frame = cap.read()
-    img = frame[:, ::-1, :]/255 # flip the image
-    img_gray = (0.0722*img[:, :, 0]) + (0.7152*img[:, :, 1]) + (0.2126*img[:, :, 2]) #BGR, coverting BGR to GRAY image
-    img_gray = undistort(img_gray, camera_matrix, dist_coeffs)
-    binary_img = np.astype(np.where(img_gray > 0.5, 1, 0)*255, np.uint8) # applying thresholding to detect black and white easily
 
-    cv2.imshow("binary", binary_img)
+    img = frame[:, ::-1, :]/255 # flip the image
+    
+    img_gray = (0.0722*img[:, :, 0]) + (0.7152*img[:, :, 1]) + (0.2126*img[:, :, 2]) #BGR, coverting BGR to GRAY image
+
+    img_gray = undistort(img_gray, camera_matrix, dist_coeffs) # undistorting the image
+
+    binary_img = np.astype(np.where(img_gray > 0.5, 1, 0), np.uint8) # applying thresholding to detect black and white easily
+
+    gradient, theta = sobel(binary_img) # applying the sobel operator to detect edges in the binary image
+
+    cv2.imshow("gradient", gradient*255)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
