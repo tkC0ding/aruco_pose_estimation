@@ -1,12 +1,6 @@
-import cv2  # using cv only for starting video feed : ) nothing else
 import numpy as np # does everything else other than starting the video : )
 from numba import jit
 from scipy.signal import convolve2d
-
-
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 
 calibration_data = np.load('calibration_files/calibration.npz')
 camera_matrix = calibration_data['camera_matrix']
@@ -181,15 +175,3 @@ def canny(image, kernel_size=3, sigma=1):
     edges = double_thresholding(nms_image)
     final_edges = hysteresis(edges, weak_pixel_value=75, strong_pixel_value=255)
     return(final_edges)
-
-while True:
-    _, frame = cap.read()
-
-    final_edges = canny(frame, 3, 1)
-
-    cv2.imshow("edges", final_edges.astype(np.uint8))
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
