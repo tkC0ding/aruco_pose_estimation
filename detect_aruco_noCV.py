@@ -86,7 +86,8 @@ def sobel(image):
     Ix = convolve2d(image, Gx)
     Iy = convolve2d(image, Gy)
 
-    G = np.sqrt((Ix**2) + (Iy**2)).astype(np.uint8)
+    G = np.sqrt((Ix**2) + (Iy**2))
+    G = G/G.max()
     theta = np.arctan2(Iy, Ix)
 
     return(G, theta)
@@ -102,9 +103,9 @@ while True:
 
     blurred_img = gaussian_filter(img_gray, 3, 1)
 
-    edges, theta = sobel(blurred_img)
+    edges, theta = sobel(img_gray)
 
-    edges = edges * 255
+    edges = (edges * 255).astype(np.uint8)
 
     cv2.imshow("laplacian", edges)
     if cv2.waitKey(1) & 0xFF == ord('q'):
