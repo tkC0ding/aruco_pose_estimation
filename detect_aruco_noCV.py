@@ -70,6 +70,16 @@ def gaussian_filter(image, kernel_size, sigma=1):
 
     return(filtered_img)
 
+def laplacian(image):
+    kernel = np.array([
+        [0, 1, 0],
+        [1, -4, 1],
+        [0, 1, 0]
+    ]) #4 neighbour laplacian
+
+    filtered_img = convolve2d(image, kernel)
+    return(filtered_img)
+
 while True:
     _, frame = cap.read()
 
@@ -79,9 +89,11 @@ while True:
 
     img_gray = undistort(img_gray, camera_matrix, dist_coeffs) # undistorting the image
 
-    blurred_img = gaussian_filter(img_gray, 9, 10)*255
+    blurred_img = gaussian_filter(img_gray, 5, 8)
 
-    cv2.imshow("blurred", blurred_img.astype(np.uint8))
+    edges = laplacian(blurred_img)*255
+
+    cv2.imshow("laplacian", edges.astype(np.uint8))
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
