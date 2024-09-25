@@ -68,6 +68,8 @@ def gaussian_filter(image, kernel_size, sigma=1):
 
     filtered_img = convolve2d(image, kernel)
 
+    filtered_img = filtered_img[1:filtered_img.shape[0]-1, 1:filtered_img.shape[1]-1]
+
     return(filtered_img)
 
 def sobel(image):
@@ -91,6 +93,9 @@ def sobel(image):
     theta = np.arctan2(Iy, Ix)
 
     theta = np.rad2deg(theta)
+
+    G = G[1:G.shape[0]-1, 1:G.shape[1]-1]
+    theta = theta[1:theta.shape[0]-1, 1:theta.shape[1]-1]
 
     return(G, theta)
 
@@ -126,10 +131,33 @@ def non_max_suppression(G, theta):
 def double_thresholding(G):
     upper_thresh = 0.2*G.max()
     lower_thresh = 0.1*G.max()
-    
-    threshed_img = np.where(G > upper_thresh, 1, np.where(G < lower_thresh, 0, G))
 
-    return(threshed_img)
+    strong_edges = (G >= upper_thresh).astype(np.uint8) * 255
+    weak_edges = ((G >= lower_thresh) & (G < upper_thresh)).astype(np.uint8) * 75
+
+    edges = strong_edges + weak_edges
+
+    return(edges)
+
+def hysteresis(edges, weak_pixel_value=75, strong_pixel_value=255):
+    edges = np.pad(edges, ((1,1), (1,1)), mode="constant", constant_values=0)
+
+    strong_pixel_position = np.argwhere(edges == 255)
+    pixel_positions = [(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]
+
+    for position in strong_pixel_position:
+        row = position[0]
+        col = position[1]
+        for pixel_position in pixel_positions:
+            if(edges[pixel_position[0], pixel_position[1]] == 75):
+                edges[pixel_position[0], pixel_position[1]] = 255
+
+    edges = np.where(edges == 75, 0, edges)
+
+    edges = edges[1:edges.shape[0]-1, 1:edges.shape[1]-1]
+
+    return(edges)
+
 
 while True:
     _, frame = cap.read()
@@ -142,13 +170,15 @@ while True:
 
     blurred_img = gaussian_filter(img_gray, 3, 1)
 
-    gradients, theta = sobel(img_gray)
+    gradients, theta = sobel(blurred_img)
 
     nms_image = non_max_suppression(gradients, theta)
 
-    threshed_image = double_thresholding(nms_image) * 255
+    edges = double_thresholding(nms_image)
 
-    cv2.imshow("double thresholding", threshed_image.astype(np.uint8))
+    final_edges = hysteresis(edges, weak_pixel_value=75, strong_pixel_value=255)
+
+    cv2.imshow("edges", final_edges.astype(np.uint8))
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
