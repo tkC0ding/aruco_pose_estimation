@@ -1,6 +1,6 @@
 import cv2  # using cv only for starting video feed : ) nothing else
 import numpy as np # does everything else other than starting the video : )
-from numba import jit
+from numba import jit, prange
 from scipy.ndimage import convolve
 
 
@@ -31,7 +31,7 @@ def undistort(image, camera_matrix, dist_coeff):
 
     return new_image
 
-@jit(nopython=True)
+@jit(nopython=True, parallel=True)
 def find_uv(x_distorted, y_distorted, camera_matrix, dist_coeff):
 
     fx, fy, ox, oy = camera_matrix[0,0], camera_matrix[1,1], camera_matrix[0,2], camera_matrix[1,2]
@@ -58,22 +58,24 @@ def find_uv(x_distorted, y_distorted, camera_matrix, dist_coeff):
 
 def sobel(image):
     Gx = np.array([
-        [-1, 0, 1],
-        [-2, 0, 2],
-        [-1, 0, 1]
+        [-3, 0, 3],
+        [-10, 0, 10],
+        [-3, 0, 3]
     ]).astype(np.uint8)
 
     Gy = np.array([
-        [-1, -2, -1],
+        [-3, -10, -3],
         [0, 0, 0],
-        [1, 2, 1]
+        [3, 10, 3]
     ]).astype(np.uint8)
 
     Ix = convolve(image, Gx).astype(np.uint8)
     Iy = convolve(image, Gy).astype(np.uint8)
 
     G = np.sqrt((Ix**2) + (Iy**2)).astype(np.uint8)
-    theta = np.arctan2(Iy, Ix)
+    theta = np.rad2deg(np.arctan2(Iy, Ix))
+
+    theta[theta < 0] += 180
 
     return (G, theta)
 
