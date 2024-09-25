@@ -158,25 +158,34 @@ def hysteresis(edges, weak_pixel_value=75, strong_pixel_value=255):
 
     return(edges)
 
+def normalize(img):
+    img_norm = img/img.max()
+    return(img_norm)
+
+def flip(img):
+    img_flip = img[:, ::-1, :]# flip the image
+    return(img_flip)
+
+def bgr2gray(img):
+    img_gray = (0.0722*img[:, :, 0]) + (0.7152*img[:, :, 1]) + (0.2126*img[:, :, 2]) #BGR, coverting BGR to GRAY image
+    return(img_gray)
+
+def canny(image, kernel_size=3, sigma=1):
+    img_norm = normalize(image)
+    img = flip(img_norm)
+    img_gray = bgr2gray(img)
+    img_gray = undistort(img_gray, camera_matrix, dist_coeffs)
+    blurred_img = gaussian_filter(img_gray, kernel_size, sigma)
+    gradients, theta = sobel(blurred_img)
+    nms_image = non_max_suppression(gradients, theta)
+    edges = double_thresholding(nms_image)
+    final_edges = hysteresis(edges, weak_pixel_value=75, strong_pixel_value=255)
+    return(final_edges)
 
 while True:
     _, frame = cap.read()
 
-    img = frame[:, ::-1, :]/255 # flip the image
-    
-    img_gray = (0.0722*img[:, :, 0]) + (0.7152*img[:, :, 1]) + (0.2126*img[:, :, 2]) #BGR, coverting BGR to GRAY image
-
-    img_gray = undistort(img_gray, camera_matrix, dist_coeffs) # undistorting the image
-
-    blurred_img = gaussian_filter(img_gray, 3, 1)
-
-    gradients, theta = sobel(blurred_img)
-
-    nms_image = non_max_suppression(gradients, theta)
-
-    edges = double_thresholding(nms_image)
-
-    final_edges = hysteresis(edges, weak_pixel_value=75, strong_pixel_value=255)
+    final_edges = canny(frame, 3, 1)
 
     cv2.imshow("edges", final_edges.astype(np.uint8))
     if cv2.waitKey(1) & 0xFF == ord('q'):
