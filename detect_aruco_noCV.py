@@ -90,7 +90,38 @@ def sobel(image):
     G = G/G.max()
     theta = np.arctan2(Iy, Ix)
 
+    theta = np.rad2deg(theta)
+
     return(G, theta)
+
+def non_max_suppression(G, theta):
+    theta[theta < 0] += 180
+
+    mask_0 = ((0 <= theta) & (theta < 22.5)) | ((157.5 <= theta) & (theta < 180))
+    mask_45 = (22.5 <= theta) & (theta < 67.5)
+    mask_90 = (67.5 <= theta) & (theta < 112.5)
+    mask_135 = (112.5 <= theta) & (theta < 157.5)
+
+    shift_0 = np.roll(G, 1, 1)
+    shift_180 = np.roll(G, -1, 1)
+
+    shift_45_pos = np.roll(shift_0, -1, 0)
+    shift_45_neg = np.roll(shift_180, 1, 0)
+
+    shift_90_pos = np.roll(G, -1, 0)
+    shift_90_neg = np.roll(G, 1, 0)
+
+    shift_135_pos = np.roll(shift_180, -1, 0)
+    shift_135_neg = np.roll(shift_0, 1, 0)
+
+    condition = ((mask_0 & (G >= shift_0) & (G >= shift_180))|
+                 (mask_45 & (G >= shift_45_pos) & (G >= shift_45_neg))|
+                 (mask_90 & (G >= shift_90_pos) & (G >= shift_90_neg))|
+                 (mask_135 & (G >= shift_135_pos) & (G >= shift_135_neg))
+                 )
+    
+    nms_img = np.where(condition, G, 0)
+    return(nms_img)
 
 while True:
     _, frame = cap.read()
@@ -103,11 +134,11 @@ while True:
 
     blurred_img = gaussian_filter(img_gray, 3, 1)
 
-    edges, theta = sobel(img_gray)
+    gradients, theta = sobel(img_gray)
 
-    edges = (edges * 255).astype(np.uint8)
+    nms_image = non_max_suppression(gradients, theta) * 255
 
-    cv2.imshow("laplacian", edges)
+    cv2.imshow("nms", nms_image.astype(np.uint8))
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
