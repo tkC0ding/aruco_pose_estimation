@@ -1,7 +1,7 @@
 import cv2  # using cv only for starting video feed : ) nothing else
 import numpy as np # does everything else other than starting the video : )
 from numba import jit, prange
-from scipy.ndimage import convolve
+from scipy.signal import convolve2d
 
 
 cap = cv2.VideoCapture(0)
@@ -56,28 +56,19 @@ def find_uv(x_distorted, y_distorted, camera_matrix, dist_coeff):
     
     return (u,v)
 
-def sobel(image):
-    Gx = np.array([
-        [-3, 0, 3],
-        [-10, 0, 10],
-        [-3, 0, 3]
-    ]).astype(np.uint8)
+def gaussian_filter(image, kernel_size, sigma=1):
 
-    Gy = np.array([
-        [-3, -10, -3],
-        [0, 0, 0],
-        [3, 10, 3]
-    ]).astype(np.uint8)
+    halfway = kernel_size//2
 
-    Ix = convolve(image, Gx).astype(np.uint8)
-    Iy = convolve(image, Gy).astype(np.uint8)
+    x_coordinates, y_coordinates = np.meshgrid(np.arange(-halfway, halfway+1), np.arange(-halfway, halfway+1))
 
-    G = np.sqrt((Ix**2) + (Iy**2)).astype(np.uint8)
-    theta = np.rad2deg(np.arctan2(Iy, Ix))
+    kernel = (1/(2*np.pi*sigma*sigma))*np.exp(-((x_coordinates**2) + (y_coordinates**2))/(2*sigma*sigma))
 
-    theta[theta < 0] += 180
+    kernel = kernel/np.sum(kernel)
 
-    return (G, theta)
+    filtered_img = convolve2d(image, kernel)
+
+    return(filtered_img)
 
 while True:
     _, frame = cap.read()
@@ -88,11 +79,9 @@ while True:
 
     img_gray = undistort(img_gray, camera_matrix, dist_coeffs) # undistorting the image
 
-    binary_img = np.astype(np.where(img_gray > 0.5, 1, 0), np.uint8) # applying thresholding to detect black and white easily
+    blurred_img = gaussian_filter(img_gray, 9, 10)*255
 
-    gradient, theta = sobel(binary_img) # applying the sobel operator to detect edges in the binary image
-
-    cv2.imshow("gradient", gradient*255)
+    cv2.imshow("blurred", blurred_img.astype(np.uint8))
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
