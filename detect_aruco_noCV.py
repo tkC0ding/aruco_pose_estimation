@@ -123,6 +123,14 @@ def non_max_suppression(G, theta):
     nms_img = np.where(condition, G, 0)
     return(nms_img)
 
+def double_thresholding(G):
+    upper_thresh = 0.2*G.max()
+    lower_thresh = 0.1*G.max()
+    
+    threshed_img = np.where(G > upper_thresh, 1, np.where(G < lower_thresh, 0, G))
+
+    return(threshed_img)
+
 while True:
     _, frame = cap.read()
 
@@ -136,9 +144,11 @@ while True:
 
     gradients, theta = sobel(img_gray)
 
-    nms_image = non_max_suppression(gradients, theta) * 255
+    nms_image = non_max_suppression(gradients, theta)
 
-    cv2.imshow("nms", nms_image.astype(np.uint8))
+    threshed_image = double_thresholding(nms_image) * 255
+
+    cv2.imshow("double thresholding", threshed_image.astype(np.uint8))
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
