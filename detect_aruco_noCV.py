@@ -1,6 +1,6 @@
 import cv2  # using cv only for starting video feed : ) nothing else
 import numpy as np # does everything else other than starting the video : )
-from numba import jit, prange
+from numba import jit
 from scipy.signal import convolve2d
 
 
@@ -70,15 +70,26 @@ def gaussian_filter(image, kernel_size, sigma=1):
 
     return(filtered_img)
 
-def laplacian(image):
-    kernel = np.array([
-        [0, 1, 0],
-        [1, -4, 1],
-        [0, 1, 0]
-    ]) #4 neighbour laplacian
+def sobel(image):
+    Gx = np.array([
+        [-1, 0 , 1],
+        [-2, 0, 2],
+        [-1, 0, 1]
+    ])
 
-    filtered_img = convolve2d(image, kernel)
-    return(filtered_img)
+    Gy = np.array([
+        [-1, -2, -1],
+        [0, 0, 0],
+        [1, 2, 1]
+    ])
+
+    Ix = convolve2d(image, Gx)
+    Iy = convolve2d(image, Gy)
+
+    G = np.sqrt((Ix**2) + (Iy**2)).astype(np.uint8)
+    theta = np.arctan2(Iy, Ix)
+
+    return(G, theta)
 
 while True:
     _, frame = cap.read()
@@ -89,11 +100,13 @@ while True:
 
     img_gray = undistort(img_gray, camera_matrix, dist_coeffs) # undistorting the image
 
-    blurred_img = gaussian_filter(img_gray, 5, 8)
+    blurred_img = gaussian_filter(img_gray, 3, 1)
 
-    edges = laplacian(blurred_img)*255
+    edges, theta = sobel(blurred_img)
 
-    cv2.imshow("laplacian", edges.astype(np.uint8))
+    edges = edges * 255
+
+    cv2.imshow("laplacian", edges)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
