@@ -136,14 +136,14 @@ def double_thresholding(G):
 def hysteresis(edges, weak_pixel_value=75, strong_pixel_value=255):
     edges = np.pad(edges, ((1,1), (1,1)), mode="constant", constant_values=0)
 
-    strong_pixel_position = np.argwhere(edges == 255)
+    strong_pixel_position = np.argwhere(edges == strong_pixel_value)
     pixel_positions = [(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]
 
     for position in strong_pixel_position:
         row = position[0]
         col = position[1]
         for pixel_position in pixel_positions:
-            if(edges[row + pixel_position[0], col + pixel_position[1]] == 75):
+            if(edges[row + pixel_position[0], col + pixel_position[1]] == weak_pixel_value):
                 edges[row + pixel_position[0], col + pixel_position[1]] = 255
 
     edges = np.where(edges == 75, 0, edges)
