@@ -143,8 +143,8 @@ def hysteresis(edges, weak_pixel_value=75, strong_pixel_value=255):
         row = position[0]
         col = position[1]
         for pixel_position in pixel_positions:
-            if(edges[pixel_position[0], pixel_position[1]] == 75):
-                edges[pixel_position[0], pixel_position[1]] = 255
+            if(edges[row + pixel_position[0], col + pixel_position[1]] == 75):
+                edges[row + pixel_position[0], col + pixel_position[1]] = 255
 
     edges = np.where(edges == 75, 0, edges)
 
