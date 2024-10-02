@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.linalg import rq
 
 def normalize_point(camera_matrix, image_points):
     img_points = np.hstack((image_points, np.ones((image_points.shape[0], 1))))
@@ -23,3 +24,19 @@ def DLT(object_points, image_points):
 
     P = np.reshape(Vt[-1], (3,4))
     return P
+
+def decompose_projection_matrix(P):
+    P_norm = P/P[2, 3]
+
+    M = P_norm[:, :3]
+
+    K, R = rq(M)
+
+    T = np.diag(np.sign(np.diag(K)))
+    K = K @ T
+    T = T @ K
+
+    t = np.linalg.inv(K) @ P_norm[:, 3]
+
+    return K, R, t
+
