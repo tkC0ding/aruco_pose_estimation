@@ -40,3 +40,12 @@ def decompose_projection_matrix(P):
 
     return K, R, t
 
+def project_points(object_points, R, t, camera_matrix):
+    projected_points = []
+    for point in object_points:
+        camera_point = np.dot(R, point) + t
+        camera_point = camera_point/camera_point[2]
+        x = np.dot(camera_matrix, camera_point)
+        projected_points.append(x[:2])
+    return np.array(projected_points)
+
