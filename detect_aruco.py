@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+from SOLVEPNP import SolvePnP
 
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -35,17 +36,17 @@ while True:
     corners, ids, rejected = detector.detectMarkers(frame)
 
     if(ids is not None):
-        success, rvecs, tvecs = cv2.solvePnP(object_points, corners[0][0], new_camera_matrix, dist_coeff)
+        rvecs, tvecs = SolvePnP(object_points, corners[0][0], new_camera_matrix)
+        print(rvecs)
+        if (rvecs.all() != None):
+            success = True
+        else:
+            success = False
+
         if success:
             cv2.aruco.drawDetectedMarkers(frame, corners, ids, (0,255,0))
 
-            r = R.from_rotvec(rvecs.flatten())
-            euler_angles = r.as_euler('xyz', degrees=True)
-
-            text = f'roll : {euler_angles[0]} pitch : {euler_angles[1]} yaw : {euler_angles[2]}'
-
             cv2.drawFrameAxes(frame, new_camera_matrix, dist_coeff, rvecs, tvecs, 0.1, 3)
-            print(text)
     cv2.imshow('frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

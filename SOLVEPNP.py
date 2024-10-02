@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.linalg import rq
+from scipy.optimize import least_squares
 
 def normalize_point(camera_matrix, image_points):
     img_points = np.hstack((image_points, np.ones((image_points.shape[0], 1))))
@@ -49,3 +50,22 @@ def project_points(object_points, R, t, camera_matrix):
         projected_points.append(x[:2])
     return np.array(projected_points)
 
+def SolvePnP(object_points, image_points, camera_matrix):
+    normalized_points = normalize_point(camera_matrix, image_points)
+    P = DLT(object_points, normalized_points)
+    K, R, t = decompose_projection_matrix(P)
+
+    def reprojection_error(params, object_points, image_points, camera_matrix):
+        R_vec = params[:9].reshape(3, 3)
+        t_vec = params[9:]
+        projected_points = project_points(object_points, R_vec, t_vec, camera_matrix)
+        return (projected_points - image_points).ravel()
+      
+    initial_params = np.hstack((R.ravel(), t))
+
+    result = least_squares(reprojection_error, initial_params, args=(object_points, image_points, camera_matrix))
+
+    R_refined = result.x[:9].reshape(3, 3)
+    t_refined = result.x[9:]
+
+    return R_refined, t_refined
