@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.linalg import rq
 from scipy.optimize import least_squares
+from scipy.spatial.transform import Rotation
 
 def normalize_point(camera_matrix, image_points):
     img_points = np.hstack((image_points, np.ones((image_points.shape[0], 1))))
@@ -66,6 +67,9 @@ def SolvePnP(object_points, image_points, camera_matrix):
     result = least_squares(reprojection_error, initial_params, args=(object_points, image_points, camera_matrix))
 
     R_refined = result.x[:9].reshape(3, 3)
-    t_refined = result.x[9:]
+    t_refined = result.x[9:].reshape((3,1))
+
+    r = Rotation.from_matrix(R_refined)
+    R_refined = r.as_rotvec().reshape((3, 1))
 
     return R_refined, t_refined

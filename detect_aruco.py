@@ -37,12 +37,10 @@ while True:
 
     if(ids is not None):
         rvecs, tvecs = SolvePnP(object_points, corners[0][0], new_camera_matrix)
-        print(rvecs)
         if (rvecs.all() != None):
             success = True
         else:
             success = False
-
         if success:
             cv2.aruco.drawDetectedMarkers(frame, corners, ids, (0,255,0))
 

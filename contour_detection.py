@@ -1,5 +1,14 @@
 import numpy as np
 
+
+def get_neighbours(P, D):
+    neighbour_intensities = []
+
+    P = list(P)
+
+    if(D == 0):
+        []
+
 def border_following(image):
     rows = image.shape[0]
     cols = image.shape[1]
@@ -8,8 +17,8 @@ def border_following(image):
 
     first_foreground_pixel = 0
 
-    neighbour_pixels = {"North":(-1, 0), "North-East":(-1, 1), "East":(0, 1), "South-East":(1, 1),
-                        "South":(1, 0), "South-West":(1, -1), "West":(0, -1), "North-West":(-1, -1)}
+    neighbour_pixels = {0:(-1, 0), 1:(-1, 1), 2:(0, 1), 3:(1, 1),
+                        4:(1, 0), 5:(1, -1), 6:(0, -1), 7:(-1, -1)}
 
     for i in rows:
         for j in cols:
@@ -19,6 +28,6 @@ def border_following(image):
         break
 
     P = first_foreground_pixel
-    D = "North"
+    D = 0
 
     boundary = [P]
