@@ -3,15 +3,6 @@ from scipy.linalg import rq
 from scipy.optimize import least_squares
 from scipy.spatial.transform import Rotation
 
-def normalize_point(camera_matrix, image_points):
-    img_points = np.hstack((image_points, np.ones((image_points.shape[0], 1))))
-
-    K_inv = np.linalg.inv(camera_matrix)
-
-    normalized_img_points = np.dot(K_inv, img_points.T).T
-
-    return normalized_img_points[:, :2]
-
 def DLT(object_points, image_points):
     n = object_points.shape[0]
     A = []
@@ -24,7 +15,7 @@ def DLT(object_points, image_points):
     A = np.array(A)
     U, sigma, Vt = np.linalg.svd(A)
 
-    P = np.reshape(Vt[-1], (3,4))
+    P = np.reshape(Vt[-1, :], (3,4))
     return P
 
 def decompose_projection_matrix(P):
@@ -36,6 +27,7 @@ def decompose_projection_matrix(P):
 
     T = np.diag(np.sign(np.diag(K)))
     K = K @ T
+    K /= K[2,2]
     T = T @ K
 
     t = np.linalg.inv(K) @ P_norm[:, 3]
@@ -52,8 +44,8 @@ def project_points(object_points, R, t, camera_matrix):
     return np.array(projected_points)
 
 def SolvePnP(object_points, image_points, camera_matrix):
-    normalized_points = normalize_point(camera_matrix, image_points)
-    P = DLT(object_points, normalized_points)
+
+    P = DLT(object_points, image_points)
     K, R, t = decompose_projection_matrix(P)
 
     def reprojection_error(params, object_points, image_points, camera_matrix):
