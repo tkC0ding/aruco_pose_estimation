@@ -10,10 +10,9 @@ def DLT(object_points, image_points):
         X, Y, Z = object_points[i][0], object_points[i][1], object_points[i][2]
         u, v = image_points[i][0], image_points[i][1]
 
-        A.append([-X, -Y, -Z, -1, 0, 0, 0, 0, u*X, u*Y, u*Z, u])
-        A.append([0, 0, 0, 0, -X, -Y, -Z, -1, v*X, v*Y, v*Z, v])
+        A.append([X, Y, Z, 1, 0, 0, 0, 0, -u*X, -u*Y, -u*Z, -u])
+        A.append([0, 0, 0, 0, X, Y, Z, 1, -v*X, -v*Y, -v*Z, -v])
     A = np.array(A)
-    U, sigma, Vt = np.linalg.svd(A)
 
     P = np.reshape(Vt[-1, :], (3,4))
     return P
@@ -32,14 +31,18 @@ def decompose_projection_matrix(P):
 
     t = np.linalg.inv(K) @ P_norm[:, 3]
 
-    return K, R, t
+    K = np.hstack((K, np.zeros((K.shape[0], 1))))
+    R = np.hstack((R, t.reshape((3, 1))))
+    R = np.vstack((R, np.array([0,0,0,1])))
 
-def project_points(object_points, R, t, camera_matrix):
+    return K, R
+
+def project_points(object_points, R, camera_matrix):
     projected_points = []
     for point in object_points:
-        camera_point = np.dot(R, point) + t
-        camera_point = camera_point/camera_point[2]
+        camera_point = np.dot(R, point)
         x = np.dot(camera_matrix, camera_point)
+        x = x/x[2]
         projected_points.append(x[:2])
     return np.array(projected_points)
 
@@ -58,7 +61,7 @@ def SolvePnP(object_points, image_points, camera_matrix):
 
     result = least_squares(reprojection_error, initial_params, args=(object_points, image_points, camera_matrix))
 
-    R_refined = result.x[:9].reshape(3, 3)
+    R_refined = result.x[:9].reshape((3, 3))
     t_refined = result.x[9:].reshape((3,1))
 
     r = Rotation.from_matrix(R_refined)
